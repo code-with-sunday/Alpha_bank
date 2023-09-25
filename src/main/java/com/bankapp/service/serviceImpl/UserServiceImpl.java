@@ -4,6 +4,7 @@ import com.bankapp.dto.*;
 import com.bankapp.entity.User;
 import com.bankapp.repository.UserRepository;
 import com.bankapp.service.EmailService;
+import com.bankapp.service.TransactionService;
 import com.bankapp.service.UserService;
 import com.bankapp.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,9 @@ import java.math.BigInteger;
 
 @Service
 public class UserServiceImpl implements UserService {
+
+    @Autowired
+    TransactionService transactionService;
 
     @Autowired
     EmailService emailService;
@@ -142,6 +146,14 @@ public class UserServiceImpl implements UserService {
         //save update in database
         userRepository.save(userToCredit);
 
+        //save transaction
+        TransactionDto transactionDto = TransactionDto.builder()
+                .accountNumber(userToCredit.getAccountNumber())
+                .transactionType("CREDIT")
+                .amount(request.getAmount())
+                .build();
+        transactionService.saveTransaction(transactionDto);
+
         return BankResponse.builder()
                 .responseCode(AccountUtils.ACCOUNT_CREDITED_SUCCESS)
                 .responseMessage(AccountUtils.ACCOUNT_CREDITED_SUCCESS_MESSAGE)
@@ -183,6 +195,14 @@ public class UserServiceImpl implements UserService {
         else {
             userToDebit.setAccountBalance(userToDebit.getAccountBalance().subtract(request.getAmount()));
             userRepository.save(userToDebit);
+
+            //save transaction
+            TransactionDto transactionDto = TransactionDto.builder()
+                    .accountNumber(userToDebit.getAccountNumber())
+                    .transactionType("DEBIT")
+                    .amount(request.getAmount())
+                    .build();
+            transactionService.saveTransaction(transactionDto);
 
             EmailDetails debitemailDetails = EmailDetails.builder()
                     .recipient(userToDebit.getEmail())
@@ -240,6 +260,7 @@ public class UserServiceImpl implements UserService {
         sourceAccountUser.setAccountBalance(sourceAccountUser.getAccountBalance().subtract(request.getAmount()));
         userRepository.save(sourceAccountUser);
 
+
         EmailDetails transferRequestFromSenderDebitEmailDetails = EmailDetails.builder()
                 .recipient(sourceAccountUser.getEmail())
                 .subject("DEBIT ALERT")
@@ -255,9 +276,17 @@ public class UserServiceImpl implements UserService {
         destinationAccountUser.setAccountBalance(destinationAccountUser.getAccountBalance().add(request.getAmount()));
         userRepository.save(destinationAccountUser);
 
+        //save transaction
+        TransactionDto transactionDto = TransactionDto.builder()
+                .accountNumber(destinationAccountUser.getAccountNumber())
+                .transactionType("CREDIT")
+                .amount(request.getAmount())
+                .build();
+        transactionService.saveTransaction(transactionDto);
+
         EmailDetails transferRequestToRecieverCreditEmailDetails = EmailDetails.builder()
                 .recipient(destinationAccountUser.getEmail())
-                .subject("DEBIT ALERT")
+                .subject("CREDIT ALERT")
                 .messageBody("Your Account has been credited. \n your account details  : \n" +
                         destinationAccountUser.getFirstName() +" " + destinationAccountUser.getLastName() + " " + destinationAccountUser.getOtherName() + " " + destinationAccountUser.getAccountNumber()
                         +"\n"+ request.getAmount()
@@ -265,10 +294,13 @@ public class UserServiceImpl implements UserService {
                 .build();
         emailService.creditEmailAlert(transferRequestToRecieverCreditEmailDetails);
 
+
         return BankResponse.builder()
                 .responseCode(AccountUtils.TRANSFER_SUCCESSFUL_CODE)
                 .responseMessage(AccountUtils.TRANSFER_SUCCESSFUL_MESSAGE)
                 .accountInfo(null)
                 .build();
+
+
     }
 }
