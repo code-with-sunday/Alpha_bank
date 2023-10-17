@@ -1,6 +1,10 @@
 package com.bankapp.service;
 
-import com.bankapp.dto.*;
+import com.bankapp.dto.request.CreditDebitRequest;
+import com.bankapp.dto.request.EnquiryRequest;
+import com.bankapp.dto.request.TransferRequest;
+import com.bankapp.dto.request.UserRequest;
+import com.bankapp.dto.response.BankResponse;
 
 public interface UserService {
 

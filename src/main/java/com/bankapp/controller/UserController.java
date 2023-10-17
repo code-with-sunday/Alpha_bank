@@ -1,6 +1,10 @@
 package com.bankapp.controller;
 
-import com.bankapp.dto.*;
+import com.bankapp.dto.request.CreditDebitRequest;
+import com.bankapp.dto.request.EnquiryRequest;
+import com.bankapp.dto.request.TransferRequest;
+import com.bankapp.dto.request.UserRequest;
+import com.bankapp.dto.response.BankResponse;
 import com.bankapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

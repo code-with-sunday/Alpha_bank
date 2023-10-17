@@ -1,6 +1,6 @@
 package com.bankapp.service;
 
-import com.bankapp.dto.EmailDetails;
+import com.bankapp.dto.request.EmailDetails;
 
 public interface EmailService {
 

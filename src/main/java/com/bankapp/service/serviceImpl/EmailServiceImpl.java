@@ -1,6 +1,6 @@
 package com.bankapp.service.serviceImpl;
 
-import com.bankapp.dto.EmailDetails;
+import com.bankapp.dto.request.EmailDetails;
 import com.bankapp.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

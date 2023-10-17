@@ -1,6 +1,7 @@
 package com.bankapp.service.serviceImpl;
 
-import com.bankapp.dto.*;
+import com.bankapp.dto.request.*;
+import com.bankapp.dto.response.BankResponse;
 import com.bankapp.entity.User;
 import com.bankapp.repository.UserRepository;
 import com.bankapp.service.EmailService;
@@ -17,14 +18,19 @@ import java.math.BigInteger;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    TransactionService transactionService;
+    final TransactionService transactionService;
+
+    final EmailService emailService;
+
+    final UserRepository userRepository;
 
     @Autowired
-    EmailService emailService;
+    public UserServiceImpl(TransactionService transactionService, EmailService emailService, UserRepository userRepository) {
+        this.transactionService = transactionService;
+        this.emailService = emailService;
+        this.userRepository = userRepository;
+    }
 
-    @Autowired
-    UserRepository userRepository;
     //Before creation of account, validate if user already has an account
     @Override
     public BankResponse createAccount(UserRequest userRequest) {
