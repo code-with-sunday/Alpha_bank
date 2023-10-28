@@ -1,10 +1,10 @@
 package com.bankapp.service;
 
-import com.bankapp.dto.request.CreditDebitRequest;
-import com.bankapp.dto.request.EnquiryRequest;
-import com.bankapp.dto.request.TransferRequest;
-import com.bankapp.dto.request.UserRequest;
+import com.bankapp.dto.request.*;
 import com.bankapp.dto.response.BankResponse;
+import com.bankapp.entity.User;
+
+import java.util.List;
 
 public interface UserService {
 
@@ -19,6 +19,14 @@ public interface UserService {
     BankResponse debitAccount (CreditDebitRequest request);
 
     BankResponse transferRequest(TransferRequest request);
+
+    BankResponse updateUserDetails(UserRequest userRequest, Long id);
+
+    List<UserRequest> getAllUser();
+
+    BankResponse deleteUserInfo(UserRequest userRequest,String email);
+
+    BankResponse login(LoginDto loginDto);
 
 
 }

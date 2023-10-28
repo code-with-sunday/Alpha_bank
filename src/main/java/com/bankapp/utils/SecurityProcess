@@ -1,0 +1,4 @@
+1. Add necessary dependencies (Spring security, and jwt dependencies)
+2. Add password field to user entity (encrypt the password)
+3. Create four classes. 3a. To handle jwt issues and 1 security configuration
+4. Add a bean of UserDetailsService to handle fetching users by username

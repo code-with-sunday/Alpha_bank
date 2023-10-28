@@ -1,7 +1,9 @@
 package com.bankapp.service.serviceImpl;
 
+import com.bankapp.config.JwtTokenProvider;
 import com.bankapp.dto.request.*;
 import com.bankapp.dto.response.BankResponse;
+import com.bankapp.entity.Role;
 import com.bankapp.entity.User;
 import com.bankapp.repository.UserRepository;
 import com.bankapp.service.EmailService;
@@ -9,26 +11,42 @@ import com.bankapp.service.TransactionService;
 import com.bankapp.service.UserService;
 import com.bankapp.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
 public class UserServiceImpl implements UserService {
 
+    final PasswordEncoder passwordEncoder;
     final TransactionService transactionService;
 
     final EmailService emailService;
 
     final UserRepository userRepository;
 
+    final AuthenticationManager authenticationManager;
+
+    final JwtTokenProvider jwtTokenProvider;
+
     @Autowired
-    public UserServiceImpl(TransactionService transactionService, EmailService emailService, UserRepository userRepository) {
+    public UserServiceImpl(PasswordEncoder passwordEncoder, TransactionService transactionService,
+                           EmailService emailService, UserRepository userRepository, AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
+        this.passwordEncoder = passwordEncoder;
         this.transactionService = transactionService;
         this.emailService = emailService;
         this.userRepository = userRepository;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     //Before creation of account, validate if user already has an account
@@ -55,10 +73,12 @@ public class UserServiceImpl implements UserService {
                 .stateOfOrigin(userRequest.getStateOfOrigin())
                 .accountNumber(AccountUtils.generateAccountNumber())
                 .email(userRequest.getEmail())
+                .password(passwordEncoder.encode(userRequest.getPassword()))
                 .accountBalance(BigDecimal.ZERO)
                 .phoneNumber(userRequest.getPhoneNumber())
                 .alternativePhoneNumber(userRequest.getAlternativePhoneNumber())
                 .status("ACTIVE")
+                .role(Role.valueOf("ROLE_ADMIN"))
                 .build();
 
         User savedUser = userRepository.save(newUser);
@@ -238,7 +258,7 @@ public class UserServiceImpl implements UserService {
         //check if the amount I am debiting is not more than the current amount
         //debit the account
         //Get the account to credit
-        //Credit the account
+        // the account
 
 
         boolean isDestinationAccountExist = userRepository.existsByAccountNumber(request.getDestinationAccountNumber());
@@ -308,5 +328,103 @@ public class UserServiceImpl implements UserService {
                 .build();
 
 
+    }
+
+    @Override
+    public BankResponse updateUserDetails(UserRequest userRequest, Long id) {
+
+        Optional<User> checkDetails = userRepository.findById(id);
+
+        if(checkDetails.isPresent()){
+            // You need to Extract the User object from Optional
+            User user = checkDetails.get();
+            user.setEmail(userRequest.getEmail());
+            user.setGender(userRequest.getGender());
+            user.setAlternativePhoneNumber(userRequest.getAlternativePhoneNumber());
+            user.setLastName(userRequest.getLastName());
+            user.setFirstName(userRequest.getFirstName());
+            user.setOtherName(userRequest.getOtherName());
+            user.setStateOfOrigin(userRequest.getStateOfOrigin());
+            user.setPhoneNumber(userRequest.getPhoneNumber());
+            user.setRole(userRequest.getRole());
+
+            userRepository.save(user);
+
+            EmailDetails emailDetails = EmailDetails.builder()
+                    .recipient(user.getEmail())
+                    .subject("UPDATE SUCCESSFUL")
+                    .messageBody("Your Account has been successfully updated. \n your account details  : \n" +
+                            user.getFirstName() +" " + user.getLastName() + " " + user.getOtherName() + " " + user.getAccountNumber()
+                    )
+                    .build();
+            emailService.sendEmailAlert(emailDetails);
+
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.UPDATE_USER_DETAIL_SUCCESS_CODE)
+                    .responseMessage(AccountUtils.UPDATE_USER_DETAIL_SUCCESS_MESSAGE)
+                    .accountInfo(AccountInfo.builder()
+                            .accountName(user.getFirstName())
+                            .accountName(user.getLastName())
+                            .accountNumber(user.getAccountNumber())
+                            .build())
+                    .build();
+
+
+        }
+
+        return BankResponse.builder()
+                .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                .accountInfo(null)
+                .build();
+    }
+
+    @Override
+    public List<UserRequest> getAllUser() {
+
+        List<User> allUsers = userRepository.findAll();
+
+        List<UserRequest> userList = allUsers.stream()
+                .map(entireUser -> new UserRequest(entireUser.getId(),entireUser.getFirstName(),entireUser.getLastName(),
+                        entireUser.getOtherName(), entireUser.getAddress(), entireUser.getGender(),
+                        entireUser.getPassword(),entireUser.getAlternativePhoneNumber(),entireUser.getAccountNumber(),entireUser.getStateOfOrigin(),
+                        entireUser.getPhoneNumber(),entireUser.getRole()))
+                .collect(Collectors.toList());
+
+        return userList;
+    }
+
+    @Override
+    public BankResponse deleteUserInfo(UserRequest userRequest, String email) {
+        Optional<User> userToDelete = userRepository.findByEmail(email);
+
+        if (userToDelete.isPresent()){
+            User user = userToDelete.get();
+            userRepository.delete(user);
+        }
+        return BankResponse.builder()
+                .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                .accountInfo(null)
+                .build();
+    }
+
+    public BankResponse login(LoginDto loginDto){
+        Authentication authentication = null;
+        authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDto.getEmail(),loginDto.getPassword()));
+
+        EmailDetails loginAlert = EmailDetails.builder()
+                .subject(AccountUtils.SIGN_IN_ATTEMPT_SUBJECT)
+                .recipient(loginDto.getEmail())
+                .messageBody(AccountUtils.SIGN_IN_SUCCESS_MESSAGE)
+                .build();
+
+        emailService.sendEmailAlert(loginAlert);
+
+        return BankResponse.builder()
+                .responseCode(AccountUtils.LOGIN_SUCCESSFUL)
+                .responseMessage(jwtTokenProvider.generateToken(authentication))
+                .build();
     }
 }

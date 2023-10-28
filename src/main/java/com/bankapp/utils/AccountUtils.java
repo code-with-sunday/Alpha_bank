@@ -32,6 +32,16 @@ public class AccountUtils {
 
     public static final String TRANSFER_SUCCESSFUL_MESSAGE = "Transfer successful";
 
+    public static final String UPDATE_USER_DETAIL_SUCCESS_CODE = "204";
+
+    public static final String UPDATE_USER_DETAIL_SUCCESS_MESSAGE = "Update Successful";
+
+    public static final String SIGN_IN_ATTEMPT_SUBJECT = "SIGN IN ATTEMPT";
+    public static final String SIGN_IN_SUCCESS_MESSAGE = "You Successfully signed in into your account, If you you are awere of this action, kindly ignore this message";
+
+    public static final String SIGN_IN_UNSUCCESSFUL_MESSAGE =  "Sorry Sign In Attempt Failed";
+
+    public static final String LOGIN_SUCCESSFUL = "Login Successful";
 
 
     public static String generateAccountNumber(){
