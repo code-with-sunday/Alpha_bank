@@ -1,0 +1,26 @@
+version: '4.22.0'
+services:
+  db:
+    container_name: mysql-container
+    image: mysql:latest
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_DATABASE=bankapp
+      - MYSQL_ROOT_PASSWORD=password
+    volumes:
+      - /Users/user/docker_containers/bankapp_container:/var/lib/mysql
+    restart: always
+  backend:
+    build: .
+    container_name: bankapp_container
+    image: bank_app
+    ports:
+      - "8089:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/bankapp
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - db

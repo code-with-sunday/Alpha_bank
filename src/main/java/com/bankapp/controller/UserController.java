@@ -21,14 +21,14 @@ public class UserController {
     @Autowired
     UserService userService;
 
-//    @Operation(
-//            summary = "Create New User Account",
-//            description =  "Creating a new user and assigning an account ID"
-//    )
-//    @ApiResponse(
-//            responseCode = "201",
-//            description = "Http Status 201 CREATED"
-//    )
+    @Operation(
+            summary = "Create New User Account",
+            description =  "Creating a new user and assigning an account ID"
+    )
+    @ApiResponse(
+            responseCode = "201",
+            description = "Http Status 201 CREATED"
+    )
     @PostMapping("/create")
     public ResponseEntity<BankResponse> createAccount(@RequestBody UserRequest userRequest){
        BankResponse response = userService.createAccount(userRequest);
